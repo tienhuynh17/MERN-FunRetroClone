@@ -1,0 +1,10 @@
+.mainSpace {
+  background-color: #f3f3f3;
+  min-height: 100vh;
+}
+
+.boards {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
