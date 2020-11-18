@@ -3,7 +3,6 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/user.model");
 
 const signUp = (req, res, next) => {
-  console.log("alo");
   const user = new User({
     username: req.body.username,
     password: bcrypt.hashSync(req.body.password, 8),
@@ -17,7 +16,13 @@ const signUp = (req, res, next) => {
       res.status(500).json({ message: err });
       return;
     }
-    res.status(200).json({ user });
+    const token = jwt.sign({ id: user.id }, process.env.SECRET_KEY, {
+      expiresIn: 60 * 30, // 30 mins
+    });
+
+    res.status(200).json({
+      accessToken: token,
+    });
   });
 };
 
@@ -48,10 +53,6 @@ const signIn = (req, res, next) => {
     });
 
     res.status(200).json({
-      id: user._id,
-      username: user.username,
-      fullname: user.fullname,
-      email: user.email,
       accessToken: token,
     });
   });

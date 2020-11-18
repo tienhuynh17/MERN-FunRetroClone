@@ -18,7 +18,7 @@ export default function Nav() {
     <div className={classes.navBar}>
       <Container fixed>
         <Breadcrumbs aria-label="breadcrumb">
-          <Link color="textPrimary" href="#" aria-current="page">
+          <Link color="textPrimary" href="/" aria-current="page">
             DASHBOARD
           </Link>
           <Link color="inherit" href="#">

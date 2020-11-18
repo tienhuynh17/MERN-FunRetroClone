@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema.Types;
 
-const Card = mongoose.Schema({
+const CardSchema = mongoose.Schema({
   name: {
     type: String,
     require: true,
@@ -18,4 +18,4 @@ const Card = mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Card", Card);
+module.exports = mongoose.model("Card", CardSchema);

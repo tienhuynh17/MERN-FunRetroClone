@@ -21,6 +21,7 @@ import LoginTheme from "../../public/images/login-theme.jfif";
 import Topbar from "../layouts/Topbar";
 
 import { BASE_API_URL } from "../../utils/constant";
+import authService from "../../services/auth.service";
 
 function Copyright() {
   return (
@@ -60,6 +61,9 @@ const useStyles = makeStyles((theme) => ({
   submit: {
     margin: theme.spacing(3, 0, 2),
   },
+  socialBtn: {
+    marginTop: "20px",
+  },
 }));
 
 export default function SignInSide() {
@@ -68,7 +72,6 @@ export default function SignInSide() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  //const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [errMessages, setErrMessages] = useState({});
 
   const handleSubmit = (e) => {
@@ -79,8 +82,6 @@ export default function SignInSide() {
         password: password,
       })
       .then((res) => {
-        //setIsLoggedIn(true);
-
         if (res.data.errMessages) {
           setErrMessages(res.data.errMessages);
         } else if (res.data.accessToken) {
@@ -94,6 +95,14 @@ export default function SignInSide() {
       });
   };
 
+  const handleGoogleLoginBtnOnClick = () => {
+    window.open(`${BASE_API_URL}/api-auth/google`, "_self");
+  };
+
+  const handleFacebookLoginBtnOnClick = () => {
+    window.open(`${BASE_API_URL}/api-auth/facebook`, "_self");
+  };
+
   const handleUsernameOnChange = (e) => {
     setUsername(e.target.value);
   };
@@ -102,9 +111,9 @@ export default function SignInSide() {
     setPassword(e.target.value);
   };
 
-  // if (isLoggedIn === true) {
-  //   return <Redirect to="/" />;
-  // }
+  if (authService.getCurrentUser()) {
+    return <Redirect to="/" />;
+  }
 
   return (
     <div className={classes.root}>
@@ -212,6 +221,27 @@ export default function SignInSide() {
                     <Link href="/register" variant="body2">
                       {"Don't have an account? Sign Up"}
                     </Link>
+                  </Grid>
+                </Grid>
+                <Grid container>
+                  <Grid item xs>
+                    <Button
+                      className={classes.socialBtn}
+                      onClick={handleGoogleLoginBtnOnClick}
+                      variant="outlined"
+                    >
+                      Login with Google
+                    </Button>
+                  </Grid>
+                  <Grid item>
+                    <Button
+                      className={classes.socialBtn}
+                      onClick={handleFacebookLoginBtnOnClick}
+                      variant="outlined"
+                      color="primary"
+                    >
+                      Login with Facebook
+                    </Button>
                   </Grid>
                 </Grid>
                 <Box mt={5}>

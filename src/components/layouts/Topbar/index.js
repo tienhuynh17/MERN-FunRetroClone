@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 
-import "./styles.css";
 import { Link, useHistory } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
@@ -20,6 +19,9 @@ const useStyles = makeStyles((theme) => ({
   title: {
     flexGrow: 1,
   },
+  loginBtn: {
+    color: "white",
+  },
 }));
 
 export default function Topbar(props) {
@@ -27,7 +29,7 @@ export default function Topbar(props) {
   const history = useHistory();
 
   const handleLogoutBtnOnClick = () => {
-    localStorage.removeItem("user");
+    authService.logout();
     history.push("/login");
     window.location.reload();
   };
@@ -36,28 +38,41 @@ export default function Topbar(props) {
     <div className={classes.root}>
       <AppBar position="static">
         <Toolbar>
-          <Typography variant="h6" className={classes.title}>
-            FunRetro Clone
-          </Typography>
+          <Link
+            to="/"
+            style={{ textDecoration: "none" }}
+            className={classes.title}
+          >
+            <Typography variant="h6" className={classes.loginBtn}>
+              FunRetro Clone
+            </Typography>
+          </Link>
           {props.loggedIn ? (
             <div>
-              <Button>
-                <span className="loginBtn">{props.fullname}</span>
-              </Button>
+              <Link
+                to={{ pathname: "/user-info" }}
+                style={{ textDecoration: "none" }}
+              >
+                <Button>
+                  <span className={classes.loginBtn}>
+                    {props.user.fullname}
+                  </span>
+                </Button>
+              </Link>
               <Button onClick={handleLogoutBtnOnClick}>
-                <span className="loginBtn">Logout</span>
+                <span className={classes.loginBtn}>Logout</span>
               </Button>
             </div>
           ) : (
             <div>
               <Link to="/login" style={{ textDecoration: "none" }}>
                 <Button>
-                  <span className="loginBtn">Login</span>
+                  <span className={classes.loginBtn}>Login</span>
                 </Button>
               </Link>
               <Link to="/register" style={{ textDecoration: "none" }}>
                 <Button>
-                  <span className="loginBtn">Register</span>
+                  <span className={classes.loginBtn}>Register</span>
                 </Button>
               </Link>
             </div>

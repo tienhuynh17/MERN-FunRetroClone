@@ -1,7 +1,10 @@
+const mongoose = require("mongoose");
+
 const User = require("../models/user.model");
 
 const checkEmptyInput = (req, res, next) => {
   const { username, password, confirmedPassword, fullname, email } = req.body;
+
   let errMessages = {};
   let isAnyEmpty = false;
   if (username === "") {
@@ -33,39 +36,42 @@ const checkEmptyInput = (req, res, next) => {
 };
 
 const checkDuplicateUsernameOrEmailAndMatchedPassword = (req, res, next) => {
-  const { username, email, password, confirmedPassword } = req.body;
-  // Username
-  User.findOne({ username }).exec((err, user) => {
+  const {
+    username,
+    email,
+    password,
+    confirmedPassword,
+    isChangedPassword,
+  } = req.body;
+
+  // Password
+  if (isChangedPassword && password !== confirmedPassword) {
+    res.status(200).json({
+      errMessages: { errUpdate: "Passwords are not matched" },
+    });
+    return;
+  }
+
+  User.find({
+    _id: { $ne: new mongoose.Types.ObjectId(req.userId) },
+  }).exec((err, users) => {
     if (err) {
       res.status(500).json({ message: err });
       return;
     }
-    if (user) {
-      res.json({ errMessages: { errSignup: "Username is existed" } });
-      return;
-    }
-
-    // Password
-    if (password !== confirmedPassword) {
-      res.status(200).json({
-        errMessages: { errSignup: "Passwords are not matched" },
+    if (users) {
+      users.map((user) => {
+        if (user.username === username) {
+          return res.json({
+            errMessages: { errUpdate: "Username is existed" },
+          });
+        } else if (user.email === email) {
+          return res.json({ errMessages: { errUpdate: "Email is existed" } });
+        }
       });
-      return;
     }
-
-    // Email
-    User.findOne({ email }).exec((err, user) => {
-      if (err) {
-        res.status(500).json({ message: err });
-        return;
-      }
-      if (user) {
-        res.json({ errMessages: { errSignup: "Email is existed" } });
-        return;
-      }
-      next();
-    });
   });
+  next();
 };
 
 module.exports = {

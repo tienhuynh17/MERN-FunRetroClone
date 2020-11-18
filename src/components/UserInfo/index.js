@@ -1,13 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Redirect, useHistory } from "react-router-dom";
+import { Redirect } from "react-router-dom";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import TextField from "@material-ui/core/TextField";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Checkbox from "@material-ui/core/Checkbox";
 import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
 import Box from "@material-ui/core/Box";
@@ -16,11 +14,13 @@ import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import MuiAlert from "@material-ui/lab/Alert";
+import Alert from "@material-ui/lab/Alert";
 
 import Topbar from "../layouts/Topbar";
 
 import { BASE_API_URL } from "../../utils/constant";
 import authService from "../../services/auth.service";
+import authHeader from "../../services/auth-header";
 
 function Copyright() {
   return (
@@ -55,67 +55,102 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Register() {
-  const classes = useStyles();
-  const history = useHistory();
+export default function UserInfo(props) {
+  const currentUserId = authService.getCurrentUser();
 
+  const classes = useStyles();
+
+  const [user, setUser] = useState({});
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmedPassword, setConfirmedPassword] = useState("");
   const [fullname, setFullname] = useState("");
   const [email, setEmail] = useState("");
   const [errMessages, setErrMessages] = useState({});
+  const [isChanged, setIsChanged] = useState(false);
+  const [isChangedPassword, setIsChangedPassword] = useState(false);
+  const [isSuccessful, setIsSuccessful] = useState(false);
+
+  useEffect(() => {
+    if (currentUserId) {
+      axios(`${BASE_API_URL}/api-users/me`, { headers: authHeader() })
+        .then((res) => {
+          const data = res.data;
+          setUser(data);
+          setUsername(data.username);
+          setPassword(data.password);
+          setConfirmedPassword(data.password);
+          setFullname(data.fullname);
+          setEmail(data.email);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, []);
 
   const handleUsernameOnChange = (e) => {
     setUsername(e.target.value);
+    setIsChanged(true);
   };
 
   const handlePasswordOnChange = (e) => {
     setPassword(e.target.value);
+    setIsChanged(true);
+    setIsChangedPassword(true);
   };
 
   const handleConfirmedPasswordOnChange = (e) => {
     setConfirmedPassword(e.target.value);
+    setIsChanged(true);
+    setIsChangedPassword(true);
   };
 
   const handleFullnameOnChange = (e) => {
     setFullname(e.target.value);
+    setIsChanged(true);
   };
 
   const handleEmailOnChange = (e) => {
     setEmail(e.target.value);
+    setIsChanged(true);
   };
 
-  const handleSignupBtnOnClick = (e) => {
+  const handleUpdateBtnOnClick = (e) => {
     e.preventDefault();
 
     axios
-      .post(`${BASE_API_URL}/api-auth/register`, {
-        username: username,
-        password: password,
-        confirmedPassword: confirmedPassword,
-        fullname: fullname,
-        email: email,
-      })
+      .post(
+        `${BASE_API_URL}/api-users/me/update`,
+        {
+          username,
+          password,
+          confirmedPassword,
+          fullname,
+          email,
+          isChangedPassword,
+        },
+        { headers: authHeader() }
+      )
       .then((res) => {
         if (res.data.errMessages) {
           setErrMessages(res.data.errMessages);
-        } else if (res.data.accessToken) {
-          localStorage.setItem("user", JSON.stringify(res.data));
-          history.push("/");
-          window.location.reload();
+        } else if (res.status === 200) {
+          setIsSuccessful(true);
+          setIsChanged(false);
+          setErrMessages({});
         }
       })
       .catch((err) => console.log(err));
   };
 
-  if (authService.getCurrentUser()) {
-    return <Redirect to="/" />;
+  if (!currentUserId) {
+    return <Redirect to="/login" />;
   }
 
   return (
     <div>
-      <Topbar loggedIn={false} />
+      <Topbar loggedIn={true} user={user} />
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <div className={classes.paper}>
@@ -123,12 +158,12 @@ export default function Register() {
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5">
-            Sign up
+            User Infomation
           </Typography>
           <form
             className={classes.form}
             noValidate
-            onSubmit={(e) => handleSignupBtnOnClick(e)}
+            onSubmit={(e) => handleUpdateBtnOnClick(e)}
           >
             <Grid container spacing={2}>
               {errMessages.errUsername ? (
@@ -160,7 +195,6 @@ export default function Register() {
               {errMessages.errPassword ? (
                 <TextField
                   error
-                  type="password"
                   label="Password"
                   helperText={errMessages.errPassword}
                   variant="outlined"
@@ -168,17 +202,20 @@ export default function Register() {
                   fullWidth
                   autoFocus
                   name="password"
+                  value={password}
                   onChange={(e) => handlePasswordOnChange(e)}
                 />
               ) : (
                 <Grid item xs={12}>
                   <TextField
                     variant="outlined"
-                    type="password"
                     required
                     fullWidth
+                    type="password"
                     name="password"
+                    value={password}
                     label="Password"
+                    autoComplete="current-password"
                     onChange={(e) => handlePasswordOnChange(e)}
                   />
                 </Grid>
@@ -194,6 +231,7 @@ export default function Register() {
                   fullWidth
                   autoFocus
                   name="confirmedPassword"
+                  value={confirmedPassword}
                   onChange={(e) => handleConfirmedPasswordOnChange(e)}
                 />
               ) : (
@@ -205,6 +243,7 @@ export default function Register() {
                     fullWidth
                     name="confirmedPassword"
                     label="Confirmed Password"
+                    value={confirmedPassword}
                     onChange={(e) => handleConfirmedPasswordOnChange(e)}
                   />
                 </Grid>
@@ -263,33 +302,46 @@ export default function Register() {
                   />
                 </Grid>
               )}
-              <Grid item xs={12}>
-                {errMessages.errSignup ? (
-                  <MuiAlert elevation={6} variant="filled" severity="error">
-                    {errMessages.errSignup}
-                  </MuiAlert>
-                ) : (
-                  ""
-                )}
-              </Grid>
-            </Grid>
 
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              color="primary"
-              className={classes.submit}
-            >
-              Sign Up
-            </Button>
-            <Grid container justify="flex-end">
-              <Grid item>
-                <Link href="#" variant="body2">
-                  Already have an account? Sign in
-                </Link>
-              </Grid>
+              {errMessages.errUpdate ? (
+                <Grid item xs={12}>
+                  <MuiAlert elevation={6} variant="filled" severity="error">
+                    {errMessages.errUpdate}
+                  </MuiAlert>
+                </Grid>
+              ) : (
+                ""
+              )}
+              {isSuccessful ? (
+                <Grid item xs={12}>
+                  <Alert severity="success">
+                    Update successfully — check it out!
+                  </Alert>
+                </Grid>
+              ) : (
+                ""
+              )}
             </Grid>
+            {isChanged ? (
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                className={classes.submit}
+              >
+                Update
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                fullWidth
+                className={classes.submit}
+                disabled
+              >
+                Update
+              </Button>
+            )}
           </form>
         </div>
         <Box mt={5}>
